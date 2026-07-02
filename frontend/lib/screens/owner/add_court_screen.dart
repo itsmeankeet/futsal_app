@@ -1,8 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/booking_provider.dart';
 import '../../models/futsal.dart';
 
@@ -19,15 +21,13 @@ class _AddCourtScreenState extends ConsumerState<AddCourtScreen> {
   final _priceController = TextEditingController();
   final _descController = TextEditingController();
 
-  final List<TextEditingController> _imageControllers = [
-    TextEditingController(),
-    TextEditingController(),
-    TextEditingController(),
-    TextEditingController(),
-  ];
-
   Futsal? _selectedFutsal;
   bool _isIndoor = true;
+
+  // Image Selection States
+  final List<Uint8List?> _imageBytes = List.filled(4, null);
+  final List<String?> _imageNames = List.filled(4, null);
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -42,10 +42,31 @@ class _AddCourtScreenState extends ConsumerState<AddCourtScreen> {
     _nameController.dispose();
     _priceController.dispose();
     _descController.dispose();
-    for (var controller in _imageControllers) {
-      controller.dispose();
-    }
     super.dispose();
+  }
+
+  Future<void> _pickImage(int index) async {
+    try {
+      final file = await _picker.pickImage(source: ImageSource.gallery);
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _imageBytes[index] = bytes;
+          _imageNames[index] = file.name;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e'), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imageBytes[index] = null;
+      _imageNames[index] = null;
+    });
   }
 
   void _submit() async {
@@ -58,10 +79,15 @@ class _AddCourtScreenState extends ConsumerState<AddCourtScreen> {
       return;
     }
 
-    final imageUrls = _imageControllers
-        .map((c) => c.text.trim())
-        .where((url) => url.isNotEmpty)
-        .toList();
+    final imageFiles = <Map<String, dynamic>>[];
+    for (int i = 0; i < 4; i++) {
+      if (_imageBytes[i] != null && _imageNames[i] != null) {
+        imageFiles.add({
+          'bytes': _imageBytes[i],
+          'name': _imageNames[i],
+        });
+      }
+    }
 
     try {
       await ref.read(bookingProvider.notifier).createCourt(
@@ -70,7 +96,7 @@ class _AddCourtScreenState extends ConsumerState<AddCourtScreen> {
             isIndoor: _isIndoor,
             pricePerHour: double.parse(_priceController.text.trim()),
             description: _descController.text.trim(),
-            imageUrls: imageUrls,
+            imageFiles: imageFiles,
           );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -178,24 +204,74 @@ class _AddCourtScreenState extends ConsumerState<AddCourtScreen> {
 
                     // Court Photos Section
                     Text(
-                      'Court Photos (Add up to 4 URLs)',
+                      'Court Photos (Add up to 4 photos)',
                       style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
-                    const SizedBox(height: 8),
-                    ...List.generate(4, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: TextFormField(
-                          controller: _imageControllers[index],
-                          style: GoogleFonts.inter(color: Colors.white),
-                          decoration: InputDecoration(
-                            hintText: 'Image URL ${index + 1}',
-                            prefixIcon: const Icon(Icons.image_outlined, color: themeColor),
+                    const SizedBox(height: 12),
+                    
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.3,
+                      ),
+                      itemCount: 4,
+                      itemBuilder: (context, index) {
+                        final bytes = _imageBytes[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[850]!),
                           ),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 24),
+                          child: bytes != null
+                              ? Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Image.memory(
+                                        bytes,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () => _removeImage(index),
+                                        child: CircleAvatar(
+                                          radius: 12,
+                                          backgroundColor: Colors.black.withOpacity(0.6),
+                                          child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : InkWell(
+                                  onTap: () => _pickImage(index),
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.add_photo_alternate_outlined, color: themeColor, size: 28),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Photo ${index + 1}',
+                                        style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 28),
 
                     // Pitch Type Toggle
                     Text(

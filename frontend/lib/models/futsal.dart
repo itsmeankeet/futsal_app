@@ -17,6 +17,7 @@ class Futsal {
   final String coverImage;
   final List<Facility> facilities;
   final double averageRating;
+  final String description;
 
   Futsal({
     required this.id,
@@ -35,6 +36,7 @@ class Futsal {
     required this.coverImage,
     required this.facilities,
     required this.averageRating,
+    required this.description,
   });
 
   factory Futsal.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class Futsal {
           ? (json['facilities'] as List).map((f) => Facility.fromJson(f)).toList()
           : [],
       averageRating: double.parse((json['average_rating'] ?? 0.0).toString()),
+      description: json['description'] ?? '',
     );
   }
 }

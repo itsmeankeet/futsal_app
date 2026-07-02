@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/court.dart';
+import '../../models/futsal.dart';
 
 // Screens
 import '../../screens/login_screen.dart';
 import '../../screens/register_screen.dart';
 import '../../screens/home_screen.dart';
 import '../../screens/court_detail_screen.dart';
+import '../../screens/futsal_detail_screen.dart';
 import '../../screens/my_bookings_screen.dart';
 import '../../screens/owner/owner_dashboard_screen.dart';
 import '../../screens/owner/register_futsal_screen.dart';
@@ -40,6 +42,13 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final court = state.extra as FutsalCourt;
         return CourtDetailScreen(court: court);
+      },
+    ),
+    GoRoute(
+      path: '/customer/futsal-detail',
+      builder: (context, state) {
+        final futsal = state.extra as Futsal;
+        return FutsalDetailScreen(futsal: futsal);
       },
     ),
     GoRoute(

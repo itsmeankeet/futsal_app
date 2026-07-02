@@ -34,7 +34,12 @@ class FutsalCourt {
       description: json['description'] ?? '',
       status: json['status'] ?? 'ACTIVE',
       images: json['images'] != null
-          ? (json['images'] as List).map<String>((img) => img['image_url']?.toString() ?? '').toList()
+          ? (json['images'] as List).map<String>((img) {
+              if (img is Map) {
+                return (img['image'] ?? img['image_url'] ?? '').toString();
+              }
+              return img.toString();
+            }).toList()
           : [],
     );
   }

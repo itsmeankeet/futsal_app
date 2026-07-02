@@ -115,7 +115,7 @@ class FutsalSerializer(serializers.ModelSerializer):
             'id', 'owner', 'owner_company', 'name', 'address', 'contact_phone', 
             'latitude', 'longitude', 'opening_hours', 'closing_hours', 
             'is_approved', 'is_closed_today', 'logo', 'cover_image', 'facilities', 
-            'facility_ids', 'average_rating', 'created_at'
+            'facility_ids', 'average_rating', 'created_at', 'description'
         ]
         read_only_fields = ['owner', 'is_approved']
 
@@ -134,23 +134,22 @@ class CourtImageSerializer(serializers.ModelSerializer):
 
 class CourtSerializer(serializers.ModelSerializer):
     images = CourtImageSerializer(many=True, read_only=True)
-    image_urls = serializers.ListField(
-        child=serializers.URLField(), write_only=True, required=False
-    )
     futsal_name = serializers.ReadOnlyField(source='futsal.name')
 
     class Meta:
         model = Court
         fields = [
             'id', 'futsal', 'futsal_name', 'name', 'is_indoor', 
-            'price_per_hour', 'description', 'status', 'images', 'image_urls'
+            'price_per_hour', 'description', 'status', 'images'
         ]
 
     def create(self, validated_data):
-        image_urls = validated_data.pop('image_urls', [])
         court = super().create(validated_data)
-        for url in image_urls:
-            CourtImage.objects.create(court=court, image_url=url)
+        request = self.context.get('request')
+        if request and request.FILES:
+            files = request.FILES.getlist('images')
+            for f in files:
+                CourtImage.objects.create(court=court, image=f)
         return court
 
 

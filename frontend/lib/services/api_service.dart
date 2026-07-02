@@ -208,21 +208,48 @@ class ApiService {
     required String contactPhone,
     required String openingHours,
     required String closingHours,
-    String? logo,
-    String? coverImage,
+    required String description,
+    required double latitude,
+    required double longitude,
+    required List<int>? logoBytes,
+    required String? logoName,
+    required List<int>? coverImageBytes,
+    required String? coverImageName,
     List<String>? facilityIds,
   }) async {
     try {
-      final response = await _dio.post('/futsals/', data: {
+      final formData = FormData.fromMap({
         'name': name,
         'address': address,
         'contact_phone': contactPhone,
         'opening_hours': openingHours,
         'closing_hours': closingHours,
-        'logo': logo,
-        'cover_image': coverImage,
-        'facility_ids': facilityIds ?? [],
+        'description': description,
+        'latitude': latitude,
+        'longitude': longitude,
       });
+
+      if (facilityIds != null) {
+        for (var id in facilityIds) {
+          formData.fields.add(MapEntry('facility_ids', id));
+        }
+      }
+
+      if (logoBytes != null && logoName != null) {
+        formData.files.add(MapEntry(
+          'logo',
+          MultipartFile.fromBytes(logoBytes, filename: logoName),
+        ));
+      }
+
+      if (coverImageBytes != null && coverImageName != null) {
+        formData.files.add(MapEntry(
+          'cover_image',
+          MultipartFile.fromBytes(coverImageBytes, filename: coverImageName),
+        ));
+      }
+
+      final response = await _dio.post('/futsals/', data: formData);
       return response.data;
     } on DioException catch (e) {
       throw Exception(e.message);
@@ -236,18 +263,30 @@ class ApiService {
     required bool isIndoor,
     required double pricePerHour,
     required String description,
-    List<String>? imageUrls,
+    List<Map<String, dynamic>>? imageFiles,
   }) async {
     try {
-      final response = await _dio.post('/courts/', data: {
+      final formData = FormData.fromMap({
         'futsal': futsalId,
         'name': name,
         'is_indoor': isIndoor,
         'price_per_hour': pricePerHour,
         'description': description,
         'status': 'ACTIVE',
-        'image_urls': imageUrls ?? [],
       });
+
+      if (imageFiles != null) {
+        for (var fileData in imageFiles) {
+          final bytes = fileData['bytes'] as List<int>;
+          final filename = fileData['name'] as String;
+          formData.files.add(MapEntry(
+            'images',
+            MultipartFile.fromBytes(bytes, filename: filename),
+          ));
+        }
+      }
+
+      final response = await _dio.post('/courts/', data: formData);
       return response.data;
     } on DioException catch (e) {
       throw Exception(e.message);

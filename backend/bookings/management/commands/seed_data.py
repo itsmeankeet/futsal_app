@@ -81,8 +81,9 @@ class Command(BaseCommand):
                 'opening_hours': time(6, 0),
                 'closing_hours': time(22, 0),
                 'is_approved': True,
-                'logo': 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=150&auto=format&fit=crop',
-                'cover_image': 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop'
+                'logo': 'logos/apex_logo.png',
+                'cover_image': 'covers/apex_cover.png',
+                'description': 'Apex Futsal Arena is Lalitpur\'s premier sporting destination. Featuring premium FIFA-standard indoor wooden flooring, top-tier lighting systems, high-speed free WiFi, changing rooms with hot showers, and a spacious cafeteria serving healthy refreshments. Ideal for both casual matches and professional tournaments.'
             }
         )
         futsal1.facilities.set([facilities['Parking'], facilities['Shower'], facilities['WiFi'], facilities['Cafeteria']])
@@ -98,8 +99,9 @@ class Command(BaseCommand):
                 'opening_hours': time(6, 0),
                 'closing_hours': time(22, 0),
                 'is_approved': True,
-                'logo': 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=150&auto=format&fit=crop',
-                'cover_image': 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=600&auto=format&fit=crop'
+                'logo': 'logos/elite_logo.png',
+                'cover_image': 'covers/elite_cover.png',
+                'description': 'Elite Futsal Hub located in the heart of Hattisar, Kathmandu offers a premium playing experience. Equipped with professional shock-absorbent indoor rubber court flooring, professional floodlights, lockers, and clean drinking water facilities. We also offer coaching sessions and regular amateur leagues.'
             }
         )
         futsal2.facilities.set([facilities['Parking'], facilities['Locker Room'], facilities['Drinking Water'], facilities['Floodlights']])
@@ -116,7 +118,9 @@ class Command(BaseCommand):
                 'opening_hours': time(7, 0),
                 'closing_hours': time(21, 0),
                 'is_approved': False,
-                'cover_image': 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop'
+                'logo': 'logos/valley_logo.png',
+                'cover_image': 'covers/valley_cover.png',
+                'description': 'Valley Futsal Ground in Koteshwor, Kathmandu features outdoor artificial turf pitches. Great ventilation, scenic open-air environment, parking space, and refreshments bar. Perfect for weekend games with friends.'
             }
         )
 

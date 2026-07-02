@@ -8,6 +8,7 @@ import '../models/court.dart';
 import '../models/futsal.dart';
 import '../models/booking.dart';
 import '../providers/booking_provider.dart';
+import '../core/utils/image_helper.dart';
 
 class CourtDetailScreen extends ConsumerStatefulWidget {
   final FutsalCourt court;
@@ -57,7 +58,7 @@ class _CourtDetailScreenState extends ConsumerState<CourtDetailScreen> {
         id: '', owner: '', ownerCompany: '', name: '', address: '', contactPhone: '',
         latitude: 0, longitude: 0, openingHours: '', closingHours: '',
         isApproved: false, isClosedToday: false, logo: '', coverImage: '',
-        facilities: [], averageRating: 0
+        facilities: [], averageRating: 0, description: ''
       ),
     );
     final isSelectedDateToday = DateFormat('yyyy-MM-dd').format(_selectedDate) == DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -263,7 +264,7 @@ class _CourtDetailScreenState extends ConsumerState<CourtDetailScreen> {
         id: '', owner: '', ownerCompany: '', name: '', address: '', contactPhone: '',
         latitude: 0, longitude: 0, openingHours: '', closingHours: '',
         isApproved: false, isClosedToday: false, logo: '', coverImage: '',
-        facilities: [], averageRating: 0
+        facilities: [], averageRating: 0, description: ''
       ),
     );
 
@@ -308,7 +309,7 @@ class _CourtDetailScreenState extends ConsumerState<CourtDetailScreen> {
                                   itemCount: widget.court.images.length,
                                   itemBuilder: (context, index) {
                                     return Image.network(
-                                      widget.court.images[index],
+                                      getImageUrl(widget.court.images[index]),
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) => Container(
                                         color: Colors.grey[900],

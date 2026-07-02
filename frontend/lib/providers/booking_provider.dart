@@ -225,8 +225,13 @@ class BookingNotifier extends StateNotifier<BookingState> {
     required String contactPhone,
     required String openingHours,
     required String closingHours,
-    String? logo,
-    String? coverImage,
+    required String description,
+    required double latitude,
+    required double longitude,
+    required List<int>? logoBytes,
+    required String? logoName,
+    required List<int>? coverImageBytes,
+    required String? coverImageName,
     List<String>? facilityIds,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -237,8 +242,13 @@ class BookingNotifier extends StateNotifier<BookingState> {
         contactPhone: contactPhone,
         openingHours: openingHours,
         closingHours: closingHours,
-        logo: logo,
-        coverImage: coverImage,
+        description: description,
+        latitude: latitude,
+        longitude: longitude,
+        logoBytes: logoBytes,
+        logoName: logoName,
+        coverImageBytes: coverImageBytes,
+        coverImageName: coverImageName,
         facilityIds: facilityIds,
       );
       final newFutsal = Futsal.fromJson(res);
@@ -259,7 +269,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
     required bool isIndoor,
     required double pricePerHour,
     required String description,
-    List<String>? imageUrls,
+    List<Map<String, dynamic>>? imageFiles,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -269,7 +279,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
         isIndoor: isIndoor,
         pricePerHour: pricePerHour,
         description: description,
-        imageUrls: imageUrls,
+        imageFiles: imageFiles,
       );
       final newCourt = FutsalCourt.fromJson(res);
       state = state.copyWith(

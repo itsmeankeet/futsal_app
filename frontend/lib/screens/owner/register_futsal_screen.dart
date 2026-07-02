@@ -1,8 +1,10 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/booking_provider.dart';
 
 class RegisterFutsalScreen extends ConsumerStatefulWidget {
@@ -17,11 +19,21 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _descController = TextEditingController();
+  final _latitudeController = TextEditingController();
+  final _longitudeController = TextEditingController();
   
   TimeOfDay _openingTime = const TimeOfDay(hour: 6, minute: 0);
   TimeOfDay _closingTime = const TimeOfDay(hour: 22, minute: 0);
 
   final List<String> _selectedFacilityIds = [];
+
+  // Image Selection States
+  Uint8List? _logoBytes;
+  String? _logoName;
+  Uint8List? _coverBytes;
+  String? _coverName;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -29,6 +41,51 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(bookingProvider.notifier).fetchFacilities();
     });
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _descController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickLogo() async {
+    try {
+      final file = await _picker.pickImage(source: ImageSource.gallery);
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _logoBytes = bytes;
+          _logoName = file.name;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking logo: $e'), backgroundColor: Colors.redAccent),
+      );
+    }
+  }
+
+  Future<void> _pickCover() async {
+    try {
+      final file = await _picker.pickImage(source: ImageSource.gallery);
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _coverBytes = bytes;
+          _coverName = file.name;
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking cover: $e'), backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   void _selectTime(bool isOpening) async {
@@ -67,6 +124,17 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_coverBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a cover image for your futsal arena.'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     try {
       await ref.read(bookingProvider.notifier).createFutsal(
             name: _nameController.text.trim(),
@@ -74,8 +142,13 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
             contactPhone: _phoneController.text.trim(),
             openingHours: _formatTimeOfDay(_openingTime),
             closingHours: _formatTimeOfDay(_closingTime),
-            logo: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?q=80&w=150&auto=format&fit=crop',
-            coverImage: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop',
+            description: _descController.text.trim(),
+            latitude: double.tryParse(_latitudeController.text.trim()) ?? 0.0,
+            longitude: double.tryParse(_longitudeController.text.trim()) ?? 0.0,
+            logoBytes: _logoBytes,
+            logoName: _logoName,
+            coverImageBytes: _coverBytes,
+            coverImageName: _coverName,
             facilityIds: _selectedFacilityIds,
           );
       if (mounted) {
@@ -120,6 +193,90 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // Visual Image Selection Section
+                    Text(
+                      'Futsal Visual Branding',
+                      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 12),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Cover Image Picker
+                        GestureDetector(
+                          onTap: _pickCover,
+                          child: Container(
+                            height: 160,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey[850]!),
+                            ),
+                            child: _coverBytes != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Image.memory(
+                                      _coverBytes!,
+                                      width: double.infinity,
+                                      height: 160,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.add_photo_alternate_outlined, color: themeColor, size: 36),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Select Cover Photo (Required)',
+                                        style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                        // Logo Picker positioned on top of cover image
+                        Positioned(
+                          bottom: -30,
+                          left: 20,
+                          child: GestureDetector(
+                            onTap: _pickLogo,
+                            child: Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF262626),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: themeColor, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.4),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: _logoBytes != null
+                                  ? ClipOval(
+                                      child: Image.memory(
+                                        _logoBytes!,
+                                        width: 70,
+                                        height: 70,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.camera_alt_outlined,
+                                      color: Colors.grey,
+                                      size: 28,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 50),
+
                     TextFormField(
                       controller: _nameController,
                       style: GoogleFonts.inter(color: Colors.white),
@@ -151,6 +308,57 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
                         prefixIcon: Icon(Icons.phone_outlined, color: themeColor),
                       ),
                       validator: (val) => val == null || val.trim().isEmpty ? 'Enter contact number' : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _latitudeController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: GoogleFonts.inter(color: Colors.white),
+                            decoration: const InputDecoration(
+                              hintText: 'Latitude (e.g. 27.68)',
+                              prefixIcon: Icon(Icons.map_outlined, color: themeColor),
+                            ),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) return 'Enter latitude';
+                              if (double.tryParse(val) == null) return 'Invalid number';
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _longitudeController,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            style: GoogleFonts.inter(color: Colors.white),
+                            decoration: const InputDecoration(
+                              hintText: 'Longitude (e.g. 85.31)',
+                              prefixIcon: Icon(Icons.map_outlined, color: themeColor),
+                            ),
+                            validator: (val) {
+                              if (val == null || val.trim().isEmpty) return 'Enter longitude';
+                              if (double.tryParse(val) == null) return 'Invalid number';
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    TextFormField(
+                      controller: _descController,
+                      maxLines: 4,
+                      style: GoogleFonts.inter(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: 'Futsal Description (pitch size, flooring, special packages...)',
+                        prefixIcon: Icon(Icons.description_outlined, color: themeColor),
+                      ),
+                      validator: (val) => val == null || val.trim().isEmpty ? 'Enter a description about the futsal' : null,
                     ),
                     const SizedBox(height: 24),
 
@@ -260,6 +468,11 @@ class _RegisterFutsalScreenState extends ConsumerState<RegisterFutsalScreen> {
                       height: 56,
                       child: ElevatedButton(
                         onPressed: state.isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: themeColor,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
                         child: state.isLoading
                             ? const SpinKitThreeBounce(color: Colors.black, size: 24)
                             : const Text('Submit for Verification'),

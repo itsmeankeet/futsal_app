@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
 import '../../models/user.dart';
+import '../../core/utils/image_helper.dart';
 
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -22,6 +23,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
       ref.read(bookingProvider.notifier).fetchFutsals(); // load all futsals
       ref.read(bookingProvider.notifier).fetchBookings(); // load all bookings
       ref.read(bookingProvider.notifier).fetchOwners(isVerified: false); // load all unverified owners
+      ref.read(bookingProvider.notifier).fetchCourts(); // load all courts
     });
   }
 
@@ -245,50 +247,157 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                               itemCount: unapprovedFutsals.length,
                               itemBuilder: (context, index) {
                                 final futsal = unapprovedFutsals[index];
+                                final futsalCourts = state.courts.where((c) => c.futsalId == futsal.id).toList();
+
                                 return Card(
-                                  color: const Color(0xFF1E1E1E),
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
+                                    color: const Color(0xFF1E1E1E),
+                                    margin: const EdgeInsets.only(bottom: 20),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    clipBehavior: Clip.antiAlias,
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
                                       children: [
-                                        Text(
-                                          futsal.name,
-                                          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text('Address: ${futsal.address}', style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
-                                        Text('Owner Co: ${futsal.ownerCompany}', style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 12)),
-                                        const Divider(color: Colors.grey, height: 24),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: [
-                                            ElevatedButton(
-                                              onPressed: () => _rejectFutsal(futsal.id),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: Colors.redAccent.withOpacity(0.1),
-                                                foregroundColor: Colors.redAccent,
-                                                side: const BorderSide(color: Colors.redAccent),
-                                              ),
-                                              child: const Text('Reject'),
+                                        if (futsal.coverImage.isNotEmpty)
+                                          Image.network(
+                                            getImageUrl(futsal.coverImage),
+                                            height: 120,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, err, stack) => Container(
+                                              height: 120,
+                                              color: Colors.grey[900],
                                             ),
-                                            const SizedBox(width: 12),
-                                            ElevatedButton(
-                                              onPressed: () => _approveFutsal(futsal.id),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: themeColor,
-                                                foregroundColor: Colors.black,
+                                          ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(16.0),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  if (futsal.logo.isNotEmpty) ...[
+                                                    CircleAvatar(
+                                                      backgroundImage: NetworkImage(getImageUrl(futsal.logo)),
+                                                      radius: 20,
+                                                      backgroundColor: Colors.transparent,
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                  ],
+                                                  Expanded(
+                                                    child: Text(
+                                                      futsal.name,
+                                                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                              child: const Text('Approve'),
-                                            ),
-                                          ],
+                                              const SizedBox(height: 12),
+                                              Text('Address: ${futsal.address}', style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                                              Text('Coordinates: Lat ${futsal.latitude.toStringAsFixed(4)}, Lng ${futsal.longitude.toStringAsFixed(4)}', style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                                              Text('Phone: ${futsal.contactPhone}', style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
+                                              if (futsal.description.isNotEmpty) ...[
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  futsal.description,
+                                                  style: GoogleFonts.inter(color: Colors.grey[550], fontSize: 12, fontStyle: FontStyle.italic),
+                                                ),
+                                              ],
+                                              const SizedBox(height: 6),
+                                              Text('Owner Co: ${futsal.ownerCompany}', style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 12)),
+                                              
+                                              if (futsalCourts.isNotEmpty) ...[
+                                                const Divider(color: Colors.grey, height: 24),
+                                                Text('Registered Courts:', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                                                const SizedBox(height: 8),
+                                                ...futsalCourts.map((court) {
+                                                  return Padding(
+                                                    padding: const EdgeInsets.only(bottom: 12.0),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                                      children: [
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          children: [
+                                                            Text(
+                                                              court.name,
+                                                              style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                                            ),
+                                                            Text(
+                                                              'Rs. ${court.pricePerHour.toStringAsFixed(0)}/hr • ${court.isIndoor ? "Indoor" : "Outdoor"}',
+                                                              style: GoogleFonts.inter(color: themeColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        if (court.description.isNotEmpty)
+                                                          Padding(
+                                                            padding: const EdgeInsets.only(top: 2.0),
+                                                            child: Text(court.description, style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 11)),
+                                                          ),
+                                                        if (court.images.isNotEmpty) ...[
+                                                          const SizedBox(height: 6),
+                                                          SizedBox(
+                                                            height: 60,
+                                                            child: ListView.builder(
+                                                              scrollDirection: Axis.horizontal,
+                                                              itemCount: court.images.length,
+                                                              itemBuilder: (context, cImgIndex) {
+                                                                return Padding(
+                                                                  padding: const EdgeInsets.only(right: 8),
+                                                                  child: ClipRRect(
+                                                                    borderRadius: BorderRadius.circular(6),
+                                                                    child: Image.network(
+                                                                      getImageUrl(court.images[cImgIndex]),
+                                                                      width: 60,
+                                                                      height: 60,
+                                                                      fit: BoxFit.cover,
+                                                                      errorBuilder: (context, error, stackTrace) => Container(
+                                                                        width: 60,
+                                                                        height: 60,
+                                                                        color: Colors.grey[950],
+                                                                        child: const Icon(Icons.broken_image, size: 20, color: Colors.grey),
+                                                                      ),
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ],
+                                                    ),
+                                                  );
+                                                }).toList(),
+                                              ],
+
+                                              const Divider(color: Colors.grey, height: 24),
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                children: [
+                                                  ElevatedButton(
+                                                    onPressed: () => _rejectFutsal(futsal.id),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: Colors.redAccent.withOpacity(0.1),
+                                                      foregroundColor: Colors.redAccent,
+                                                      side: const BorderSide(color: Colors.redAccent),
+                                                    ),
+                                                    child: const Text('Reject'),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  ElevatedButton(
+                                                    onPressed: () => _approveFutsal(futsal.id),
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: themeColor,
+                                                      foregroundColor: Colors.black,
+                                                    ),
+                                                    child: const Text('Approve'),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                );
+                                  );
                               },
                             ),
                 ],

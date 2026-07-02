@@ -8,6 +8,7 @@ import '../../providers/booking_provider.dart';
 import '../../models/booking.dart';
 import '../../models/futsal.dart';
 import '../../models/court.dart';
+import '../../core/utils/image_helper.dart';
 
 class OwnerDashboardScreen extends ConsumerStatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -348,39 +349,79 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  futsal.name,
-                                  style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: futsal.isApproved ? themeColor.withOpacity(0.1) : Colors.orangeAccent.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: futsal.isApproved ? themeColor.withOpacity(0.4) : Colors.orangeAccent.withOpacity(0.4)),
-                                ),
-                                child: Text(
-                                  futsal.isApproved ? 'Approved' : 'Pending Verification',
-                                  style: GoogleFonts.inter(
-                                    color: futsal.isApproved ? themeColor : Colors.orangeAccent,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                              if (futsal.coverImage.isNotEmpty)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    getImageUrl(futsal.coverImage),
+                                    width: 80,
+                                    height: 80,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Container(
+                                      width: 80,
+                                      height: 80,
+                                      color: Colors.grey[900],
+                                      child: const Icon(Icons.sports_soccer, color: Colors.grey),
+                                    ),
                                   ),
+                                ),
+                              if (futsal.coverImage.isNotEmpty) const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            futsal.name,
+                                            style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: futsal.isApproved ? themeColor.withOpacity(0.1) : Colors.orangeAccent.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: futsal.isApproved ? themeColor.withOpacity(0.4) : Colors.orangeAccent.withOpacity(0.4)),
+                                          ),
+                                          child: Text(
+                                            futsal.isApproved ? 'Approved' : 'Pending Verification',
+                                            style: GoogleFonts.inter(
+                                              color: futsal.isApproved ? themeColor : Colors.orangeAccent,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      futsal.address,
+                                      style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13),
+                                    ),
+                                    if (futsal.description.isNotEmpty) ...[
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        futsal.description,
+                                        style: GoogleFonts.inter(color: Colors.grey[500], fontSize: 11),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 12),
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              Expanded(
-                                child: Text(futsal.address, style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 13)),
-                              ),
                               Row(
                                 children: [
                                   Text(
